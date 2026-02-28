@@ -13,6 +13,7 @@ const app=express()
 app.use(express.json())
 
 const categoryRoutes = require("./routes/categoryRoutes");
+const authRoutes=require("./routes/authRoutes")
 
 // app.use("/",(req,res)=>{
 //     return res.send("app is running")
@@ -24,7 +25,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 
 // Use category routes
 app.use("/api/categories", categoryRoutes);
-
+app.use("/api/auth",authRoutes)
 
 sequelize.sync()
   .then(() => {

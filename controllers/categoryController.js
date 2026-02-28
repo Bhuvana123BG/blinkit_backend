@@ -1,6 +1,8 @@
-const { Category } = require("../models");//this doubt
+const { Category, Subcategory } = require("../models");//this doubt
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
+
+
 
 // GET all categories
 const getAllCategories = async (req, res) => {
@@ -61,22 +63,35 @@ const getSubcategoryByCategorieId = async (req, res) => {
     try {
         const { cid } = req.params;
 
-        const dbRes = await sequelize.query(
-            `SELECT
-                s.id AS subcategory_id,
-                s.title AS subcategory_name,
-                s.imgurl AS imgurl
-             FROM subcategory s
-             WHERE s.category_id = :categoryId`,
-            {
-                replacements: { categoryId: parseInt(cid) },
-                type: QueryTypes.SELECT
-            }
-        );
+        // const dbRes = await sequelize.query(
+        //     `SELECT
+        //         s.id AS subcategory_id,
+        //         s.title AS subcategory_name,
+        //         s.imgurl AS imgurl
+        //      FROM subcategory s
+        //      WHERE s.category_id = :categoryId`,
+        //     {
+        //         replacements: { categoryId: parseInt(cid) },
+        //         type: QueryTypes.SELECT
+        //     }
+        // );
+
+        const subcategories = await Subcategory.findAll({
+            where: {
+                category_id: parseInt(cid)
+            },
+            attributes: [
+                ['id', 'subcategory_id'],
+                ['title', 'subcategory_name'],
+                'imgurl'
+            ],
+            raw:true
+        });
 
 
+      
 
-        const finalRes = dbRes.map(db => (
+        const finalRes = subcategories.map(db => (
             {
                 id: db.subcategory_id,
                 name: db.subcategory_name,

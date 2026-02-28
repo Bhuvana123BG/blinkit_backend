@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
     {
         host: host,
         dialect: "mysql",
-        logging: true,
+        logging: false,
     }
 );
 

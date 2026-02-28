@@ -1,48 +1,51 @@
-const { Category } = require("../models");
+const { Category } = require("../models");//this doubt
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
 
 // GET all categories
-exports.getAllCategories = async (req, res) => {
+const getAllCategories = async (req, res) => {
     try {
-        // const categories = await Category.findAll();
-        const categories = await sequelize.query(
-            "SELECT * FROM category",
+        const dbRes = await sequelize.query(
+            `SELECT
+                c.id AS id,
+                c.title AS name,
+                c.imgurl AS imgurl,
+                s.id AS subcategory_id,
+                s.title AS subcategory_name
+            FROM category c
+            LEFT JOIN subcategory s
+                ON s.id = (
+                    SELECT MIN(sc.id)
+                    FROM subcategory sc
+                    WHERE sc.category_id = c.id
+                );`,
             {
-                type: QueryTypes.SELECT,
+                type: QueryTypes.SELECT
             }
-        );
-        const subcategories = await sequelize.query(
-            `SELECT s.id as default_subcategory_id, s.category_id, s.title
-                FROM subcategory s
-                JOIN(
-                    SELECT category_id, MIN(id) AS min_id
-                FROM subcategory
-                GROUP BY category_id
-                ) t
-                ON s.id = t.min_id;
-        `,
-            {
-                type: QueryTypes.SELECT,
-            }
-        );
-        console.log(categories)
-        console.log(subcategories)
+        )
 
-        const finalresponse=categories.map(cat => ({
-            category_id: cat.id,
-            name: cat.title,
-            image_url: cat.imgurl,
-            default_subcategory:subcategories.filter(sub=>sub.category_id===cat.id)[0],
-        }))     
+
+        const finalRes = dbRes.map(db => (
+            {
+                id: db.id,
+                name: db.name,
+                imgurl: db.imgurl,
+                default_subcategory: {
+                    subcategory_id: db.subcategory_id,
+                    subcategory_name: db.subcategory_name
+                }
+            }
+        ));
+
+
 
 
         res.status(200).json({
             success: true,
-            count: categories.length,
-            categories:finalresponse
-        
+            count: finalRes.length,
+            categories: finalRes
         });
+
     }
     catch (error) {
         res.status(500).json({
@@ -52,3 +55,53 @@ exports.getAllCategories = async (req, res) => {
         });
     }
 };
+
+
+const getSubcategoryByCategorieId = async (req, res) => {
+    try {
+        const { cid } = req.params;
+
+        const dbRes = await sequelize.query(
+            `SELECT
+                s.id AS subcategory_id,
+                s.title AS subcategory_name,
+                s.imgurl AS imgurl
+             FROM subcategory s
+             WHERE s.category_id = :categoryId`,
+            {
+                replacements: { categoryId: parseInt(cid) },
+                type: QueryTypes.SELECT
+            }
+        );
+
+
+
+        const finalRes = dbRes.map(db => (
+            {
+                id: db.subcategory_id,
+                name: db.subcategory_name,
+                imgurl: db.imgurl,
+
+            }
+        ));
+
+
+
+
+        res.status(200).json({
+            success: true,
+            count: finalRes.length,
+            categories: finalRes
+        });
+
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error fetching categories",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { getAllCategories, getSubcategoryByCategorieId }

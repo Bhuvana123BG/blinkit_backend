@@ -1,9 +1,10 @@
 const express=require("express")
-const { getUserCart } = require("../controllers/cartController")
+const { getUserCart, updateCart } = require("../controllers/cartController")
 
 const router=express.Router()
 
 router.get("/",getUserCart);
 
+router.put("/update",updateCart)
 
 module.exports=router;

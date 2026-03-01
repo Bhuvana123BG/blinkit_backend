@@ -13,7 +13,9 @@ const app=express()
 app.use(express.json())
 
 const categoryRoutes = require("./routes/categoryRoutes");
-const authRoutes=require("./routes/authRoutes")
+const authRoutes=require("./routes/authRoutes");
+const cartRoutes=require("./routes/cartRoutes")
+const authMiddleware = require("./middlewares/authMiddleware");
 
 // app.use("/",(req,res)=>{
 //     return res.send("app is running")
@@ -25,7 +27,13 @@ const authRoutes=require("./routes/authRoutes")
 
 // Use category routes
 app.use("/api/categories", categoryRoutes);
-app.use("/api/auth",authRoutes)
+app.use("/api/auth",authRoutes);
+
+// app.use("/private",authMiddleware,(req,res)=>{
+//     res.send("middleware connected succesfully")
+// })
+
+app.use("/api/cart",authMiddleware,cartRoutes);
 
 sequelize.sync()
   .then(() => {

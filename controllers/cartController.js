@@ -200,6 +200,7 @@ const updateCart = async (req, res) => {
 
 
         //Remove not existing products from cart for given user
+        //products which are there in db cart and not there in req
         //3.db call
         await CartItem.destroy({
             where: {

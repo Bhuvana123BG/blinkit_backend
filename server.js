@@ -14,8 +14,10 @@ app.use(express.json())
 
 const categoryRoutes = require("./routes/categoryRoutes");
 const authRoutes=require("./routes/authRoutes");
-const cartRoutes=require("./routes/cartRoutes")
+const cartRoutes=require("./routes/cartRoutes");
+const productRoutes=require("./routes/productRoutes");
 const authMiddleware = require("./middlewares/authMiddleware");
+
 
 // app.use("/",(req,res)=>{
 //     return res.send("app is running")
@@ -34,6 +36,7 @@ app.use("/api/auth",authRoutes);
 // })
 
 app.use("/api/cart",authMiddleware,cartRoutes);
+app.use("/api/product",authMiddleware,productRoutes);
 
 sequelize.sync()
   .then(() => {

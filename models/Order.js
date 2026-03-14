@@ -20,7 +20,7 @@ const Order = sequelize.define("Order", {
     type: DataTypes.ENUM("pending", "shipped", "delivered", "cancelled"),
   },
 }, {
-  tableName: "order",
+  tableName: "orders",
   timestamps: false,
 });
 

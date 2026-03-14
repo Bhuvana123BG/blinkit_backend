@@ -1,4 +1,4 @@
-const express=require("express")
+const express = require("express")
 require("dotenv").config()
 
 
@@ -6,18 +6,18 @@ const { sequelize } = require("./models");
 
 
 
-PORT=process.env.PORT || 3000
+PORT = process.env.PORT || 3000
 
-const app=express()
+const app = express()
 
 app.use(express.json())
 
 const categoryRoutes = require("./routes/categoryRoutes");
-const authRoutes=require("./routes/authRoutes");
-const cartRoutes=require("./routes/cartRoutes");
-const productRoutes=require("./routes/productRoutes");
+const authRoutes = require("./routes/authRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const productRoutes = require("./routes/productRoutes");
 const authMiddleware = require("./middlewares/authMiddleware");
-
+const orderRoutes = require("./routes/orderRoutes")
 
 // app.use("/",(req,res)=>{
 //     return res.send("app is running")
@@ -29,18 +29,19 @@ const authMiddleware = require("./middlewares/authMiddleware");
 
 // Use category routes
 app.use("/api/categories", categoryRoutes);
-app.use("/api/auth",authRoutes);
+app.use("/api/auth", authRoutes);
 
 // app.use("/private",authMiddleware,(req,res)=>{
 //     res.send("middleware connected succesfully")
 // })
 
-app.use("/api/cart",authMiddleware,cartRoutes);
-app.use("/api/product",productRoutes);
+app.use("/api/cart", authMiddleware, cartRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/order", authMiddleware, orderRoutes)
 
 sequelize.sync()
-  .then(() => {
-    console.log("Database synced");
-    app.listen(PORT, () =>console.log(`server is running at http://localhost:${PORT}`));
-  })
-  .catch(err => console.error(err));
+    .then(() => {
+        console.log("Database synced");
+        app.listen(PORT, () => console.log(`server is running at http://localhost:${PORT}`));
+    })
+    .catch(err => console.error(err));

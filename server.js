@@ -36,7 +36,7 @@ app.use("/api/auth",authRoutes);
 // })
 
 app.use("/api/cart",authMiddleware,cartRoutes);
-app.use("/api/product",authMiddleware,productRoutes);
+app.use("/api/product",productRoutes);
 
 sequelize.sync()
   .then(() => {

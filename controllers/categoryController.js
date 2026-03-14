@@ -1,4 +1,4 @@
-const { Category, Subcategory } = require("../models");//this doubt
+const {  Subcategory } = require("../models");
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
 

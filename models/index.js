@@ -1,11 +1,9 @@
 const sequelize = require("../config/database");
-
 const User = require("./User");
 const Address = require("./Address");
 const Category = require("./Category");
 const Subcategory = require("./Subcategory");
 const Product = require("./Product");
-const ImgGallery = require("./ImgGallery");
 const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const CartItem = require("./CartItem");
@@ -39,15 +37,7 @@ CartItem.belongsTo(User, { foreignKey: "user_id" });
 Product.hasMany(CartItem, { foreignKey: "product_id" });
 CartItem.belongsTo(Product, { foreignKey: "product_id" });
 
-// Product → Image Gallery
-Product.hasMany(ImgGallery, {
-    foreignKey: "prodId",
-    onDelete: "CASCADE",
-  });
-  
-  ImgGallery.belongsTo(Product, {
-    foreignKey: "prodId",
-  });
+
 
 module.exports = {
   sequelize,
@@ -59,5 +49,5 @@ module.exports = {
   Order,
   OrderItem,
   CartItem,
-  ImgGallery,
+
 };

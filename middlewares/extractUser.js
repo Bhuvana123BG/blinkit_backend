@@ -1,16 +1,15 @@
 const jwt = require("jsonwebtoken");
 
 
-const authMiddleware = (req, res, next) => {
+const extractUser = (req, res, next) => {
    try {
        // Get token from header
        const authHeader = req.headers["authorization"];
 
 
        if (!authHeader) {
-           return res.status(401).json({ message: "Token missing" });
+           return next();
        }
-
 
        // Format: Bearer token
        const token = authHeader.split(" ")[1];
@@ -23,7 +22,6 @@ const authMiddleware = (req, res, next) => {
 
        // Verify token
        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
 
        // Attach user info to request
        req.user = decoded;
@@ -38,4 +36,4 @@ const authMiddleware = (req, res, next) => {
 };
 
 
-module.exports = authMiddleware;
+module.exports = extractUser;

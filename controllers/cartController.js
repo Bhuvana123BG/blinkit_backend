@@ -95,14 +95,20 @@ const getUserCart = async (req, res) => {
 const updateCart = async (req, res) => {
 
     try {
-        // const { items } = req.body || {};
-        const { items = [] } = req.body || {};
+        const { items } = req.body || {};
+     
         // validateItems
         // {
         //     items:[
         //         {},{},{},{}
         //     ]
         // }
+
+        if(!items){
+            return res.status(404).json({
+                message: "invalid operation"
+            });
+        }
 
         const productsIds = []
         const productVSQuantity = {}
@@ -182,21 +188,7 @@ const updateCart = async (req, res) => {
 
         }
 
-        // const user_id = req.user.id;
-
-        // if (productsIds.length === 0) {
-        //     //delete cart for given user
-
-
-        //     //2.db call ---If not give items then  delete entire cart for given user
-        //     await CartItem.destroy({
-        //         where: { user_id: user_id }
-        //     });
-
-
-        //     return res.status(200).json(buildResponse([]))
-        // }
-
+       
 
 
         //Remove not existing products from cart for given user
@@ -211,81 +203,22 @@ const updateCart = async (req, res) => {
             }
         });
 
-        //4.db call----get db cart and sync
-
-        const dbCartItems = await CartItem.findAll({
-            where: { user_id: user_id }
-        });
-
-        //convert db cart to map
-        const dbCartMap = {};
-
-        for (const cartItem of dbCartItems) {
-            dbCartMap[cartItem.product_id] = cartItem;
-        }
-
-        // dbCartMap = {
-        //     101: CartItemObject,
-        //     102: CartItemObject
-        //  }
-
-
-        //preparing data for insert/update
-        const itemsToInsert = [];
-        const updatePromises = [];
+        //4.db call update cartitems in db existing products and new products
+        const cartItems = [];
 
         for (const productId of productsIds) {
-
-            const requestedQuantity = productVSQuantity[productId];
-
-
-
-            // All Sequelize DB methods are async:create(),update(),destroy(),findAll(),findOne(),bulkCreate() They all return Promises.
-            // Product already exists in DB → UPDATE
-            if (dbCartMap[productId]) {
-
-                updatePromises.push(
-                    CartItem.update(
-                        { quantity: requestedQuantity },
-                        {
-                            where: {
-                                user_id: user_id,
-                                product_id: productId
-                            }
-                        }
-                    )
-                );
-
-            } else {
-                // Product not in DB → INSERT
-                itemsToInsert.push({
-                    user_id: user_id,
-                    product_id: productId,
-                    quantity: requestedQuantity
-                });
-            }
+            cartItems.push({
+                user_id: user_id,
+                product_id: productId,
+                quantity: productVSQuantity[productId]
+            });
         }
 
-        // Insert new products
-        if (itemsToInsert.length > 0) {
-            await CartItem.bulkCreate(itemsToInsert);
-        }
+        await CartItem.bulkCreate(cartItems, {
+            updateOnDuplicate: ["quantity"]
+        });
 
-        // Update existing products
-        await Promise.all(updatePromises);//"Wait until all those update queries are finished."
-
-
-        //fetch updated cart with product details
-        // const updatedCartItems = await CartItem.findAll({
-        //     where: { user_id: user_id },
-        //     include: [
-        //         {
-        //             model: Product,
-        //             attributes: ["id", "name", "price", "discount"]
-        //         }
-        //     ]
-        // });
-
+      
 
         const updatedCartItems = await sequelize.query(
             `

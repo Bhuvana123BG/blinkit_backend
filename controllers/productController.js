@@ -7,7 +7,6 @@ const getProductDetail = async (req, res) => {
         const productId = req.params.pid;
         let cartQuantity = 0;
 
-    
         // DB1 CALL (Product)
         const product = await sequelize.query(
             `SELECT 
@@ -65,7 +64,7 @@ const getProductDetail = async (req, res) => {
 
        
         // DB3 CALL (Cart Quantity)
-        console.log("User:", req.user);
+ 
 
         const userId = req.user?.id;
 

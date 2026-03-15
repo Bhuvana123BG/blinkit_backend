@@ -1,23 +1,25 @@
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
+const { Order, OrderItem } = require("../models");
 
 
 const placeOrder = async (req, res) => {
+    const t = await sequelize.transaction();
 
     try {
         const userId = req.user.id; // User from middleware
 
         //   const { addressId, timestamp, contactNumber } = req.body;
         const { addressId } = req.body;
-        let { timestamp } = req.body;
-        let { contactNumber } = req.body;
+        let { timestamp, contactNumber } = req.body;
 
-        if (!timestamp) {
-            timestamp = new Date(); // current server time
-        }
         // 1. Validate input
         if (!addressId) {
             return res.status(400).json({ message: 'addressId is required' });
+        }
+
+        if (!timestamp) {
+            timestamp = new Date(); // current server time
         }
 
         // 2. Get address
@@ -52,6 +54,7 @@ const placeOrder = async (req, res) => {
                 type: QueryTypes.SELECT
             }
         );
+
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: 'Your cart is empty' });
         }
@@ -59,72 +62,72 @@ const placeOrder = async (req, res) => {
         // 4. Calculate totals applying discount %
         let totalAmountPaid = 0;
         let totalSaved = 0;
+        const items = cartItems.map(item => {
 
-        cartItems.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            const discountAmount = itemTotal * ((item.discount || 0) / 100);
-            totalAmountPaid += (itemTotal - discountAmount);
-            totalSaved += discountAmount;
-        });
-
-        // 5. Insert order
-        const insertOrder = await sequelize.query(
-            `INSERT INTO orders
-         (user_id, address_id, timestamp, totalamountpaid, amountsaved, orderedlatitude, orderedlongitude, phonenumber, deliverystatus)
-         VALUES
-         (:userId, :addressId, :timestamp, :totalAmountPaid, :totalSaved, :latitude, :longitude, :contactNumber, 'pending')`,
-            {
-                replacements: {
-                    userId,
-                    addressId,
-                    timestamp,
-                    totalAmountPaid,
-                    totalSaved,
-                    latitude: address.latitude,
-                    longitude: address.longitude,
-                    contactNumber
-                },
-                type: QueryTypes.INSERT
-            }
-        );
-
-
-        const orderId = insertOrder[0]; // MySQL insertId
-
-        // 6. Insert order items
-        for (const item of cartItems) {
             const itemTotal = item.price * item.quantity;
             const discountAmount = itemTotal * ((item.discount || 0) / 100);
             const amountPaid = itemTotal - discountAmount;
 
-            await sequelize.query(
-                `INSERT INTO orderItem (order_id, product_id, quantity, amountpaid, discount)
-             VALUES (:orderId, :prodId, :quantity, :amountPaid, :discount)`,
-                {
-                    replacements: {
-                        orderId,
-                        prodId: item.product_id,
-                        quantity: item.quantity,
-                        amountPaid,
-                        discount: item.discount || 0
-                    },
-                    type: QueryTypes.INSERT
-                }
-            );
-        }
+            totalAmountPaid += amountPaid;
+            totalSaved += discountAmount;
 
-        // 7. Clear cart
+            return {
+                product_id: item.product_id,
+                quantity: item.quantity,
+                amountpaid: amountPaid,
+                discount: item.discount || 0
+            };
+
+        });
+
+        //prepare data
+        const data = {
+            user_id: userId,
+            address_id: addressId,
+            timestamp,
+            totalamountpaid: totalAmountPaid,
+            amountsaved: totalSaved,
+            phonenumber: contactNumber,
+            orderedlatitude: address.latitude,
+            orderedlongitude: address.longitude,
+            deliverystatus: "pending",
+
+            items
+        };
+
+        const order = await Order.create(data, {
+            include: [
+                {
+                    model: OrderItem,
+                    as: "items"
+                }
+            ],
+            transaction: t
+        });
+
+        await t.commit();
+
+        //clear cart
         await sequelize.query(
             `DELETE FROM cartItem WHERE user_id = :userId`,
             { replacements: { userId }, type: QueryTypes.DELETE }
         );
 
-        // 8. Response
-        return res.status(201).json({ orderId, message: 'Order placed successfully' });
+        //response
+        return res.status(201).json({
+            message: "Order created successfully",
+            order:order.id
+        });
+
 
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Something went wrong' });
+
+        await t.rollback();
+
+        return res.status(500).json({
+            message: "Order creation failed",
+            error: err.message
+        });
     }
 };
 

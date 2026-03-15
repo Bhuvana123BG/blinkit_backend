@@ -105,18 +105,20 @@ const placeOrder = async (req, res) => {
             transaction: t
         });
 
-        await t.commit();
-
         //clear cart
         await sequelize.query(
             `DELETE FROM cartItem WHERE user_id = :userId`,
             { replacements: { userId }, type: QueryTypes.DELETE }
         );
 
+        await t.commit();
+
+
+
         //response
         return res.status(201).json({
             message: "Order created successfully",
-            order:order.id
+            order: order.id
         });
 
 

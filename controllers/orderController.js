@@ -1,6 +1,6 @@
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
-const { Order, OrderItem } = require("../models");
+const { Order, OrderItem ,Address} = require("../models");
 
 
 const placeOrder = async (req, res) => {
@@ -23,15 +23,12 @@ const placeOrder = async (req, res) => {
         }
 
         // 2. Get address
-        const addressRows = await sequelize.query(
-            `SELECT * FROM address WHERE id = :addressId AND user_id = :userId`,
-            {
-                replacements: { addressId, userId },
-                type: QueryTypes.SELECT
+        const address = await Address.findOne({
+            where: {
+                id: addressId,
+                user_id: userId
             }
-        );
-
-        const address = addressRows[0];
+        });
 
         if (!address) return res.status(404).json({ message: 'Address not found' });
 
